@@ -56,6 +56,10 @@ Requires a JWT. Request body:
 }
 ```
 
+The API also accepts `github.com/owner/repository` without the protocol and
+normalizes repository URLs copied from GitHub subpages to the base repository
+URL. HTTPS is required.
+
 The response contains the generated `finalSummaryArray` and `githubURL`. The
 same values are saved in MongoDB with the authenticated user's ID and username.
 

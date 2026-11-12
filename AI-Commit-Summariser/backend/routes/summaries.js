@@ -12,28 +12,45 @@ function getGithubUrl(value) {
   }
 
   try {
-    const url = new URL(value.trim());
+    const input = value.trim();
+    const url = new URL(
+      /^https?:\/\//i.test(input) ? input : `https://${input}`
+    );
     const pathParts = url.pathname.split("/").filter(Boolean);
+    const hostname = url.hostname.toLowerCase();
     if (
       url.protocol !== "https:" ||
-      url.hostname !== "github.com" ||
-      pathParts.length !== 2
+      !["github.com", "www.github.com"].includes(hostname) ||
+      pathParts.length < 2
     ) {
       return null;
     }
-    return url.toString().replace(/\/$/, "");
+
+    const owner = pathParts[0];
+    const repository = pathParts[1].replace(/\.git$/, "");
+    if (!owner || !repository) {
+      return null;
+    }
+
+    return `https://github.com/${owner}/${repository}`;
   } catch {
     return null;
   }
 }
 
 router.post("/generate", async (req, res) => {
-  const githubURL = getGithubUrl(req.body?.githubURL);
+  const rawGithubURL = req.body?.githubURL;
+  const githubURL = getGithubUrl(rawGithubURL);
 
   if (!githubURL) {
     return res
       .status(400)
-      .json({ msg: "githubURL must be a valid HTTPS GitHub repository URL" });
+      .json({
+        msg:
+          typeof rawGithubURL === "undefined"
+            ? "githubURL is required in the JSON request body"
+            : "githubURL must be a valid HTTPS GitHub repository URL",
+      });
   }
 
   try {
